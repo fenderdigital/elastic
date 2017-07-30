@@ -31,6 +31,7 @@ type SearchService struct {
 	ignoreUnavailable *bool
 	allowNoIndices    *bool
 	expandWildcards   string
+	unescapePath      bool
 }
 
 // NewSearchService creates a new service for searching in Elasticsearch.
@@ -69,6 +70,12 @@ func (s *SearchService) FilterPath(filterPath ...string) *SearchService {
 // Index sets the names of the indices to use for search.
 func (s *SearchService) Index(index ...string) *SearchService {
 	s.index = append(s.index, index...)
+	return s
+}
+
+// UnescapePath sets unescaped path to avoid double escaping by AWS.
+func (s *SearchService) UnescapePath(b bool) *SearchService {
+	s.unescapePath = b
 	return s
 }
 
@@ -353,6 +360,10 @@ func (s *SearchService) buildURL() (string, url.Values, error) {
 	if len(s.filterPath) > 0 {
 		params.Set("filter_path", strings.Join(s.filterPath, ","))
 	}
+	if s.unescapePath {
+		path, _ = url.PathUnescape(path)
+	}
+
 	return path, params, nil
 }
 
